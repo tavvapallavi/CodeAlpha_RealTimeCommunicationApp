@@ -1,27 +1,61 @@
+
 const TOKEN_KEY = "sangam_token";
 
+const API_BASE_URL =
+  "https://codealpha-realtimecommunicationapp-ndlf.onrender.com";
+
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
-export const setToken = (t) => (t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY));
+
+export const setToken = (token) =>
+  token
+    ? localStorage.setItem(TOKEN_KEY, token)
+    : localStorage.removeItem(TOKEN_KEY);
 
 async function request(path, { method = "GET", body } = {}) {
-  const headers = { "Content-Type": "application/json" };
-  const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const headers = {
+    "Content-Type": "application/json",
+  };
 
-  const res = await fetch(`/api${path}`, {
+  const token = getToken();
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE_URL}/api${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
+
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "Request failed. Try again.");
+
+  if (!res.ok) {
+    throw new Error(data.message || `Request failed (${res.status})`);
+  }
+
   return data;
 }
 
 export const api = {
-  register: (b) => request("/auth/register", { method: "POST", body: b }),
-  login: (b) => request("/auth/login", { method: "POST", body: b }),
+  register: (body) =>
+    request("/auth/register", {
+      method: "POST",
+      body,
+    }),
+
+  login: (body) =>
+    request("/auth/login", {
+      method: "POST",
+      body,
+    }),
+
   me: () => request("/auth/me"),
-  createRoom: () => request("/rooms", { method: "POST" }),
+
+  createRoom: () =>
+    request("/rooms", {
+      method: "POST",
+    }),
+
   checkRoom: (code) => request(`/rooms/${code}`),
 };
